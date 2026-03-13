@@ -5,7 +5,7 @@ namespace Models
 {
     public class DataRequest
     {
-        [JsonPropertyName("id")]
+        [JsonPropertyName("bgg_id")]
         public int BggId { get; set; }
         
         [JsonPropertyName("name")]
@@ -53,7 +53,7 @@ namespace Models
         [JsonPropertyName("wargames_rank")]
         public int? WarGamesRank { get; set; }
 
-        // Server-populated
+        /* Server-populated */
         [JsonIgnore]
         public DateTime ReceivedAt { get; set; }
     }

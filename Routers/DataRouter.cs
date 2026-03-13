@@ -13,7 +13,7 @@ public class DataRouter
     public async Task RouteAsync(HttpContext context)
     {
         string path = context.Request.Path.Value?.ToLower() ?? "";
-        if (context.Request.Method == "POST" && path == "/insert-data")
+        if (context.Request.Method == "POST" && path == "/update")
         {
             await HandleInsertData(context);
             return;

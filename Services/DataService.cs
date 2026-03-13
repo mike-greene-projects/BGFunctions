@@ -9,18 +9,15 @@ namespace Services
 {
     public class DataService
     {
-        private readonly string _connectionString = Environment.GetEnvironmentVariable("POSTGRES_CONN")
-                                                    ?? "Host=localhost;Port=5432;Username=postgres;Password=password;Database=mydb";
+        private readonly string _connectionString = Environment.GetEnvironmentVariable("bggdb") ?? "";
 
         public async Task<(bool Success, string Message)> UpsertBoardgamesAsync(List<DataRequest> requests)
         {
-            // Serialize the list to JSON to send to the stored procedure
-            var jsonData = JsonSerializer.Serialize(requests);
-
-            await using NpgsqlConnection conn = new NpgsqlConnection(_connectionString);
+            string jsonData = JsonSerializer.Serialize(requests);
+            await using NpgsqlConnection conn = new NpgsqlConnection(Base64.Decode(_connectionString));
             await conn.OpenAsync();
 
-            const string sql = "SELECT * FROM upsert_boardgames(@data)";
+            const string sql = "SELECT * FROM app.upsert_boardgames(@data)";
 
             await using var cmd = new NpgsqlCommand(sql, conn);
             cmd.Parameters.AddWithValue("data", NpgsqlTypes.NpgsqlDbType.Jsonb, jsonData);
@@ -34,6 +31,15 @@ namespace Services
             }
 
             return (false, "No response from database");
+        }
+    }
+    
+    public static class Base64
+    {
+        public static string Decode(string base64String)
+        {
+            byte[] bytes = Convert.FromBase64String(base64String);
+            return System.Text.Encoding.UTF8.GetString(bytes);
         }
     }
 }
