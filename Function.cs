@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 
+namespace BggCfg;
+
 public class Function : IHttpFunction
 {
     private readonly DataRouter _router = new DataRouter();
