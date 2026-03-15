@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 
-namespace BggCfg;
+namespace BggGfc;
 
 public class Function : IHttpFunction
 {
