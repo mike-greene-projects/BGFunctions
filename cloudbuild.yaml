@@ -53,7 +53,7 @@ substitutions:
   _SERVICE_NAME: game-director
   _AR_REPOSITORY: cloud-run-source-deploy
   _PLATFORM: managed
-  _ENTRYPOINT: Function
+  _ENTRYPOINT: dotnet BggGfc.dll
 tags:
   - gcp-cloud-build-deploy-cloud-run
   - gcp-cloud-build-deploy-cloud-run-managed
