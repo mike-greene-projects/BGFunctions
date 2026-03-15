@@ -1,0 +1,60 @@
+steps:
+  - name: gcr.io/k8s-skaffold/pack
+    env:
+      - GOOGLE_ENTRYPOINT=$_ENTRYPOINT
+      - GOOGLE_FUNCTION_TARGET=$_FUNCTION_TARGET
+      - GOOGLE_FUNCTION_SIGNATURE_TYPE=http
+    args:
+      - build
+      - >-
+        $_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
+      - '--builder=gcr.io/buildpacks/builder:latest'
+      - '--network=cloudbuild'
+      - '--path=.'
+      - '--env=GOOGLE_ENTRYPOINT'
+      - '--env=GOOGLE_FUNCTION_TARGET'
+      - '--env=GOOGLE_FUNCTION_SIGNATURE_TYPE'
+    id: Buildpack
+    entrypoint: pack
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - >-
+        $_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
+    id: Push
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    args:
+      - run
+      - services
+      - update
+      - $_SERVICE_NAME
+      - '--platform=managed'
+      - >-
+        --image=$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
+      - >-
+        --labels=managed-by=gcp-cloud-build-deploy-cloud-run,commit-sha=$COMMIT_SHA,gcb-build-id=$BUILD_ID,gcb-trigger-id=$_TRIGGER_ID
+      - '--region=$_DEPLOY_REGION'
+      - '--quiet'
+    id: Deploy
+    entrypoint: gcloud
+images:
+  - >-
+    $_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
+options:
+  substitutionOption: ALLOW_LOOSE
+  logging: CLOUD_LOGGING_ONLY
+substitutions:
+  _FUNCTION_TARGET: Function
+  _AR_HOSTNAME: us-central1-docker.pkg.dev
+  _DEPLOY_REGION: us-central1
+  REPO_NAME: bgfunctions
+  _TRIGGER_ID: 53f18c21-63ed-4f86-a5df-ded53120d326
+  _AR_PROJECT_ID: project-b4c3fd17-0505-42da-b8a
+  _SERVICE_NAME: game-director
+  _AR_REPOSITORY: cloud-run-source-deploy
+  _PLATFORM: managed
+  _ENTRYPOINT: Function
+tags:
+  - gcp-cloud-build-deploy-cloud-run
+  - gcp-cloud-build-deploy-cloud-run-managed
+  - game-director
