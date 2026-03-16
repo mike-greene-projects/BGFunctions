@@ -28,12 +28,11 @@ public class DataRouter
     {
         try
         {
-            // Enable buffering in case other middleware reads the body
             context.Request.EnableBuffering();
 
             using var reader = new StreamReader(context.Request.Body);
             var body = await reader.ReadToEndAsync();
-            context.Request.Body.Position = 0; // reset for downstream if needed
+            context.Request.Body.Position = 0;
 
             if (string.IsNullOrWhiteSpace(body))
             {
@@ -73,10 +72,10 @@ public class DataRouter
         catch (Exception ex)
         {
             // Build full exception text with inner exceptions and stack trace
-            string fullError = GetFullExceptionText(ex);
+            //string fullError = GetFullExceptionText(ex);
 
             context.Response.StatusCode = 500;
-            await context.Response.WriteAsync($"Server error:\n{fullError}");
+            await context.Response.WriteAsync($"Server error:\n{ex.Message}");
         }
     }
     private string GetFullExceptionText(Exception ex)
