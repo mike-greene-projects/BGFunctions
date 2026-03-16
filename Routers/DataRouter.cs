@@ -27,7 +27,21 @@ public class DataRouter
     {
         try
         {
-            var requests = await JsonSerializer.DeserializeAsync<List<DataRequest>>(context.Request.Body);
+            // Enable buffering in case other middleware reads the body
+            context.Request.EnableBuffering();
+
+            using var reader = new StreamReader(context.Request.Body);
+            var body = await reader.ReadToEndAsync();
+            context.Request.Body.Position = 0; // reset for downstream if needed
+
+            if (string.IsNullOrWhiteSpace(body))
+            {
+                context.Response.StatusCode = 400;
+                await context.Response.WriteAsync("No data provided");
+                return;
+            }
+
+            var requests = JsonSerializer.Deserialize<List<DataRequest>>(body);
 
             if (requests == null || requests.Count == 0)
             {
