@@ -1,50 +1,48 @@
 steps:
   - name: gcr.io/k8s-skaffold/pack
+    id: Buildpack
+    entrypoint: pack
     env:
-      - GOOGLE_ENTRYPOINT=$_ENTRYPOINT
       - GOOGLE_FUNCTION_TARGET=$_FUNCTION_TARGET
       - GOOGLE_FUNCTION_SIGNATURE_TYPE=http
     args:
       - build
-      - >-
-        $_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
-      - '--builder=gcr.io/buildpacks/builder:latest'
-      - '--network=cloudbuild'
-      - '--path=.'
-      - '--env=GOOGLE_ENTRYPOINT'
-      - '--env=GOOGLE_FUNCTION_TARGET'
-      - '--env=GOOGLE_FUNCTION_SIGNATURE_TYPE'
-    id: Buildpack
-    entrypoint: pack
+      - $_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
+      - --builder=gcr.io/buildpacks/builder:latest
+      - --network=cloudbuild
+      - --path=.
+      - --env=GOOGLE_FUNCTION_TARGET
+      - --env=GOOGLE_FUNCTION_SIGNATURE_TYPE
+
   - name: gcr.io/cloud-builders/docker
+    id: Push
     args:
       - push
-      - >-
-        $_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
-    id: Push
+      - $_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
+
   - name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    id: Deploy
+    entrypoint: gcloud
     args:
       - run
       - services
       - update
       - $_SERVICE_NAME
-      - '--platform=managed'
-      - >-
-        --image=$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
-      - >-
-        --labels=managed-by=gcp-cloud-build-deploy-cloud-run,commit-sha=$COMMIT_SHA,gcb-build-id=$BUILD_ID,gcb-trigger-id=$_TRIGGER_ID
-      - '--region=$_DEPLOY_REGION'
-      - '--quiet'
-    id: Deploy
-    entrypoint: gcloud
+      - --platform=managed
+      - --image=$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
+      - --labels=managed-by=gcp-cloud-build-deploy-cloud-run,commit-sha=$COMMIT_SHA,gcb-build-id=$BUILD_ID,gcb-trigger-id=$_TRIGGER_ID
+      - --region=$_DEPLOY_REGION
+      - --quiet
+
 images:
-  - >-
-    $_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
+  - $_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
+
 options:
   substitutionOption: ALLOW_LOOSE
   logging: CLOUD_LOGGING_ONLY
+
 substitutions:
-  _FUNCTION_TARGET: Function
+  _FUNCTION_TARGET: BggGfc.Function
   _AR_HOSTNAME: us-central1-docker.pkg.dev
   _DEPLOY_REGION: us-central1
   REPO_NAME: bgfunctions
@@ -53,7 +51,7 @@ substitutions:
   _SERVICE_NAME: game-director
   _AR_REPOSITORY: cloud-run-source-deploy
   _PLATFORM: managed
-  _ENTRYPOINT: dotnet /layers/google.dotnet.publish/publish/bin/BggGfc.dll
+
 tags:
   - gcp-cloud-build-deploy-cloud-run
   - gcp-cloud-build-deploy-cloud-run-managed
