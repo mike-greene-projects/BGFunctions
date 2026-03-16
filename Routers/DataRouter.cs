@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Models;
@@ -71,8 +72,31 @@ public class DataRouter
         }
         catch (Exception ex)
         {
+            // Build full exception text with inner exceptions and stack trace
+            string fullError = GetFullExceptionText(ex);
+
             context.Response.StatusCode = 500;
-            await context.Response.WriteAsync($"Server error: {ex.Message}");
+            await context.Response.WriteAsync($"Server error:\n{fullError}");
         }
     }
+    private string GetFullExceptionText(Exception ex)
+    {
+        var sb = new StringBuilder();
+        int depth = 0;
+
+        while (ex != null)
+        {
+            sb.AppendLine($"Exception level {depth}: {ex.GetType().FullName}");
+            sb.AppendLine($"Message: {ex.Message}");
+            sb.AppendLine("StackTrace:");
+            sb.AppendLine(ex.StackTrace ?? "(no stack trace)");
+
+            ex = ex.InnerException;
+            depth++;
+            if (ex != null) sb.AppendLine("--- Inner Exception ---");
+        }
+
+        return sb.ToString();
+    }
 }
+
