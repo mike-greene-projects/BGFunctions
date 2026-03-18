@@ -57,4 +57,51 @@ namespace Models
         [JsonIgnore]
         public DateTime ReceivedAt { get; set; }
     }
+
+    public class CollectionRequest
+    {
+        // objectid
+        [JsonPropertyName("bgg_id")]
+        public int BggId { get; set; }
+
+        [JsonPropertyName("name")]
+        public required string Name { get; set; }
+
+        [JsonPropertyName("yearpublished")]
+        public required string YearPublished { get; set; }
+
+        // is_expansion str representation ["expansion", "standalone"]
+        [JsonPropertyName("itemtype")]
+        public required string ItemType { get; set; }
+
+        [JsonPropertyName("averageweight")]
+        public double AverageWeight { get; set; }
+
+        [JsonPropertyName("numowned")]
+        public int? NumOwned { get; set; }
+
+        [JsonPropertyName("minplayers")]
+        public int MinPlayers { get; set; }
+
+        [JsonPropertyName("maxplayers")]
+        public int MaxPlayers { get; set; }
+
+        [JsonPropertyName("minplaytime")]
+        public int MinPlayTime { get; set; }
+
+        [JsonPropertyName("maxplaytime")]
+        public int MaxPlayTime { get; set; }
+
+        [JsonPropertyName("playingtime")]
+        public int PlayingTime { get; set; }
+
+        [JsonPropertyName("bggrecplayers")]
+        public required string BggRecPlayers { get; set; }
+
+        [JsonPropertyName("bggbestplayers")]
+        public required string BggBestPlayers { get; set; }
+
+        [JsonPropertyName("bggrecagerange")]
+        public required string BggRecAgeRange { get; set; }
+    }
 }

@@ -11,13 +11,35 @@ namespace Services
     {
         private readonly string _connectionString = Environment.GetEnvironmentVariable("bggdb") ?? "";
 
-        public async Task<(bool Success, string Message)> UpsertBoardgamesAsync(List<DataRequest> requests)
+        public async Task<(bool Success, string Message)> UpsertPublicGamesAsync(List<DataRequest> requests)
         {
             string jsonData = JsonSerializer.Serialize(requests);
             await using NpgsqlConnection conn = new NpgsqlConnection(Base64.Decode(_connectionString));
             await conn.OpenAsync();
 
             const string sql = "SELECT * FROM app.upsert_boardgames(@data)";
+
+            await using var cmd = new NpgsqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("data", NpgsqlTypes.NpgsqlDbType.Jsonb, jsonData);
+
+            await using var reader = await cmd.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                bool success = reader.GetBoolean(0);
+                string message = reader.GetString(1);
+                return (success, message);
+            }
+
+            return (false, "No response from database");
+        }
+        
+        public async Task<(bool Success, string Message)> UpsertCollectionGamesAsync(List<CollectionRequest> requests)
+        {
+            string jsonData = JsonSerializer.Serialize(requests);
+            await using NpgsqlConnection conn = new NpgsqlConnection(Base64.Decode(_connectionString));
+            await conn.OpenAsync();
+
+            const string sql = "SELECT * FROM app.upsert_game_collection(@data)";
 
             await using var cmd = new NpgsqlCommand(sql, conn);
             cmd.Parameters.AddWithValue("data", NpgsqlTypes.NpgsqlDbType.Jsonb, jsonData);

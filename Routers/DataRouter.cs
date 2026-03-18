@@ -14,17 +14,26 @@ public class DataRouter
     public async Task RouteAsync(HttpContext context)
     {
         string path = context.Request.Path.Value?.ToLower() ?? "";
-        if (context.Request.Method == "POST" && path == "/update")
+        if (context.Request.Method == "POST")
         {
-            await HandleInsertData(context);
-            return;
+            if (path.Equals("/data/public"))
+            {
+                await HandleUpsertPublicData(context);
+                return;
+            }
+            if (path.Equals("/data/collection"))
+            {
+                await HandleUpsertCollectionData(context);
+                return;
+            }
+
         }
 
         context.Response.StatusCode = StatusCodes.Status404NotFound;
         await context.Response.WriteAsync("Not Found");
     }
 
-    private async Task HandleInsertData(HttpContext context)
+    private async Task HandleUpsertPublicData(HttpContext context)
     {
         try
         {
@@ -40,7 +49,7 @@ public class DataRouter
                 await context.Response.WriteAsync("No data provided");
                 return;
             }
-
+            
             var requests = JsonSerializer.Deserialize<List<DataRequest>>(body);
 
             if (requests == null || requests.Count == 0)
@@ -53,7 +62,59 @@ public class DataRouter
             DateTime now = DateTime.UtcNow;
             requests.ForEach(r => r.ReceivedAt = now);
 
-            var (success, message) = await _service.UpsertBoardgamesAsync(requests);
+            var (success, message) = await _service.UpsertPublicGamesAsync(requests);
+
+            context.Response.ContentType = "application/json";
+            context.Response.StatusCode = success ? StatusCodes.Status200OK : StatusCodes.Status500InternalServerError;
+            await context.Response.WriteAsync(JsonSerializer.Serialize(new
+            {
+                success,
+                message,
+                count = requests.Count
+            }));
+        }
+        catch (JsonException jex)
+        {
+            context.Response.StatusCode = 400;
+            await context.Response.WriteAsync($"Invalid JSON: {jex.Message}");
+        }
+        catch (Exception ex)
+        {
+            // Build full exception text with inner exceptions and stack trace
+            //string fullError = GetFullExceptionText(ex);
+
+            context.Response.StatusCode = 500;
+            await context.Response.WriteAsync($"Server error:\n{ex.Message}");
+        }
+    }
+    
+    private async Task HandleUpsertCollectionData(HttpContext context)
+    {
+        try
+        {
+            context.Request.EnableBuffering();
+
+            using var reader = new StreamReader(context.Request.Body);
+            var body = await reader.ReadToEndAsync();
+            context.Request.Body.Position = 0;
+
+            if (string.IsNullOrWhiteSpace(body))
+            {
+                context.Response.StatusCode = 400;
+                await context.Response.WriteAsync("No data provided");
+                return;
+            }
+            
+            var requests = JsonSerializer.Deserialize<List<CollectionRequest>>(body);
+
+            if (requests == null || requests.Count == 0)
+            {
+                context.Response.StatusCode = 400;
+                await context.Response.WriteAsync("No data provided");
+                return;
+            }
+            
+            var (success, message) = await _service.UpsertCollectionGamesAsync(requests);
 
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = success ? StatusCodes.Status200OK : StatusCodes.Status500InternalServerError;
